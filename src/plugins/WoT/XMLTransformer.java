@@ -51,7 +51,7 @@ import freenet.support.Logger;
  */
 public final class XMLTransformer {
 
-	private static final int XML_FORMAT_VERSION = 1;
+	private static final int XML_FORMAT_VERSION = 2;
 	
 	// FIXME: For absolute beauty we can reset this to 1 before final release because our XML files start with "<WoT-testing>" for testing and will start with
 	// "<WoT>" for the final, so old puzzles won't be parsed even if we reset the format version to 1.

@@ -3,7 +3,11 @@
  * any later version). See http://www.gnu.org/ for details of the GPL. */
 package plugins.WoT;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
+import java.security.spec.RSAPublicKeySpec;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -446,7 +450,7 @@ public class Identity implements Cloneable {
 			updated();
 		}
 	}
-
+	
 	/**
 	 * Clears the list of contexts and sets it to the new list of contexts which was passed to the function.
 	 * Duplicate contexts are ignored. For invalid contexts an error is logged, all valid ones will be added.

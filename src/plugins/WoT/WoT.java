@@ -4,10 +4,17 @@
 package plugins.WoT;
 
 import java.net.MalformedURLException;
+import java.security.KeyFactory;
+import java.security.KeyPair;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.RSAPrivateKeySpec;
+import java.security.spec.RSAPublicKeySpec;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Random;
 import java.util.Map.Entry;
 
@@ -383,8 +390,6 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 			mConfig.set(Config.DATABASE_FORMAT_VERSION, databaseVersion = -92);
 			mConfig.storeAndCommit();
 		}
-		
-		
 		
 		if(databaseVersion != WoT.DATABASE_FORMAT_VERSION)
 			throw new RuntimeException("Your database is too outdated to be upgraded automatically, please create a new one by deleting " 
@@ -2183,18 +2188,50 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 		deleteIdentity(identity);
 	}
 	
+	
 	public OwnIdentity createOwnIdentity(String nickName, boolean publishTrustList, String context)
-		throws MalformedURLException, InvalidParameterException {
+		throws InvalidParameterException, MalformedURLException, NoSuchAlgorithmException {
 		
+		//Generate SSK keypair
 		FreenetURI[] keypair = getPluginRespirator().getHLSimpleClient().generateKeyPair("WoT");
+		
 		return createOwnIdentity(keypair[0].toString(), keypair[1].toString(), nickName, publishTrustList, context);
 	}
 
+	public synchronized OwnIdentity createOwnIdentity(String insertURI, String requestURI, String nickName,
+			boolean publishTrustList, String context) throws InvalidParameterException, MalformedURLException {
+
+		//create RSA keypair
+		RSAPublicKeySpec pub;
+		RSAPrivateKeySpec priv;
+		
+		try {
+			KeyFactory fact = KeyFactory.getInstance("RSA");
+			KeyPair kp = RSAUtils.generateRSAKeyPair();
+			pub = fact.getKeySpec(kp.getPublic(), RSAPublicKeySpec.class);
+			priv = fact.getKeySpec(kp.getPrivate(), RSAPrivateKeySpec.class);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw new InvalidParameterException("Unable to create RSA keypair");
+		}
+
+		String rsaPublicKey  = RSAUtils.RSAKeyParametersToString(pub.getModulus(), pub.getPublicExponent());
+		String rsaPrivateKey = RSAUtils.RSAKeyParametersToString(priv.getModulus(), priv.getPrivateExponent());
+		
+		return createOwnIdentity(insertURI, requestURI, nickName, publishTrustList, context, rsaPublicKey, rsaPrivateKey);
+	}
+	
 	/**
 	 * @param context A context with which you want to use the identity. Null if you want to add it later.
+	 * @throws MalformedURLException 
 	 */
 	public synchronized OwnIdentity createOwnIdentity(String insertURI, String requestURI, String nickName,
-			boolean publishTrustList, String context) throws MalformedURLException, InvalidParameterException {
+									boolean publishTrustList, String context, String rsaPublicKey, 
+									String rsaPrivateKey) throws InvalidParameterException, MalformedURLException {
+		
+		//test provided keys -> not ok? generate exception
+		RSAUtils.readRSAKeyFromString(rsaPublicKey, RSAPublicKeySpec.class);
+		RSAUtils.readRSAKeyFromString(rsaPrivateKey, RSAPrivateKeySpec.class);
 		
 		synchronized(mDB.lock()) {
 			OwnIdentity identity;
@@ -2214,6 +2251,10 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 					identity.addContext(IntroductionPuzzle.INTRODUCTION_CONTEXT); /* TODO: make configureable */
 					identity.setProperty(IntroductionServer.PUZZLE_COUNT_PROPERTY, Integer.toString(IntroductionServer.DEFAULT_PUZZLE_COUNT));
 				}
+				
+				//Add both RSA keys
+				identity.setProperty("RSAPublicKey", rsaPublicKey);
+				identity.addRSAPrivateKey(rsaPrivateKey);
 				
 				try {
 					storeWithoutCommit(identity);
@@ -2247,7 +2288,7 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 		}
 	}
 
-	public synchronized void restoreIdentity(String requestURI, String insertURI) throws MalformedURLException, InvalidParameterException {
+	public synchronized void restoreIdentity(String requestURI, String insertURI, String rsaPrivateKey, String rsaPublicKey) throws MalformedURLException, InvalidParameterException {
 		OwnIdentity identity;
 		synchronized(mPuzzleStore) {
 		synchronized(mDB.lock()) {
@@ -2275,7 +2316,11 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 				
 					identity.setContexts(old.getContexts());
 					identity.setProperties(old.getProperties());
-	
+
+					//restore the private RSA key
+					identity.setProperty("RSAPublicKey", rsaPublicKey);
+					identity.addRSAPrivateKey(rsaPrivateKey);
+					
 					// Update all received trusts
 					for(Trust oldReceivedTrust : getReceivedTrusts(old)) {
 						Trust newReceivedTrust = new Trust(oldReceivedTrust.getTruster(), identity,
@@ -2292,6 +2337,8 @@ public class WoT implements FredPlugin, FredPluginThreadless, FredPluginFCP, Fre
 						mDB.store(newScore);
 					}
 		
+					
+					
 					storeWithoutCommit(identity);
 					initTrustTreeWithoutCommit(identity);
 					

@@ -53,7 +53,7 @@ public class OwnIdentitiesPage extends WebPageImpl {
 	public void make() {
 		if(request.isPartSet("RestoreIdentity")) {
 			try {
-				wot.restoreIdentity(request.getPartAsString("RequestURI", 1024), request.getPartAsString("InsertURI", 1024));
+				wot.restoreIdentity(request.getPartAsString("RequestURI", 1024), request.getPartAsString("InsertURI", 1024), request.getPartAsString("RSAPrivateKey", 4096), request.getPartAsString("RSAPublicKey", 4096));
 				HTMLNode restoreBox = addContentBox(l10n().getString("OwnIdentitiesPage.RestoreIdentityInProgress.Header"));
 				restoreBox.addChild("p", l10n().getString("OwnIdentitiesPage.RestoreIdentityInProgress.Text"));
 			}
@@ -158,6 +158,10 @@ public class OwnIdentitiesPage extends WebPageImpl {
 		restoreForm.addChild("input", new String[] { "type", "name", "size", "value" }, new String[] { "text", "RequestURI", "70", l10n().getString("OwnIdentitiesPage.RestoreIdentity.RequestURI") });
 		restoreForm.addChild("br");
 		restoreForm.addChild("input", new String[] { "type", "name", "size", "value" }, new String[] { "text", "InsertURI", "70", l10n().getString("OwnIdentitiesPage.RestoreIdentity.InsertURI") });
+		restoreForm.addChild("br");
+		restoreForm.addChild("input", new String[] { "type", "name", "size", "value" }, new String[] { "text", "RSAPublicKey", "100", l10n().getString("OwnIdentitiesPage.RestoreIdentity.RSAPublicKey") });
+		restoreForm.addChild("br");
+		restoreForm.addChild("input", new String[] { "type", "name", "size", "value" }, new String[] { "text", "RSAPrivateKey", "100", l10n().getString("OwnIdentitiesPage.RestoreIdentity.RSAPrivateKey") });
 		restoreForm.addChild("br");
 		restoreForm.addChild("input", new String[] { "type", "name", "value" }, new String[] { "submit", "RestoreIdentity", l10n().getString("OwnIdentitiesPage.RestoreIdentity.RestoreButton") });
 	}

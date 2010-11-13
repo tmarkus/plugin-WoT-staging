@@ -3,8 +3,14 @@
  * any later version). See http://www.gnu.org/ for details of the GPL. */
 package plugins.WoT;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.MalformedURLException;
+import java.security.spec.RSAPrivateKeySpec;
 import java.util.Date;
+
+import com.sun.org.apache.xml.internal.security.utils.Base64;
 
 import plugins.WoT.exceptions.InvalidParameterException;
 import freenet.keys.FreenetURI;
@@ -23,6 +29,8 @@ public class OwnIdentity extends Identity {
 	protected final Date mCreationDate;
 	
 	protected Date mLastInsertDate;
+	
+	protected String RSAPrivateKey;
 	
 	/**
 	 * Get a list of fields which the database should create an index on.
@@ -143,6 +151,16 @@ public class OwnIdentity extends Identity {
 	protected synchronized void restoreEdition(long edition) throws InvalidParameterException {
 		setEdition(edition);
 		mCurrentEditionWasFetched = false;
+	}
+	
+	public synchronized void addRSAPrivateKey(String RSAPrivateKey)
+	{
+		this.RSAPrivateKey = RSAPrivateKey;
+	}
+
+	public String getRSAPrivateKey()
+	{
+		return this.RSAPrivateKey;
 	}
 	
 	public Date getCreationDate() {

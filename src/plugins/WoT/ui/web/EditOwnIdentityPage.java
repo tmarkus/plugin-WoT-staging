@@ -69,6 +69,12 @@ public class EditOwnIdentityPage extends WebPageImpl {
 			
 			createForm.addChild("p", new String[] { "style" }, new String[] { "font-size: x-small" },
 					l10n().getString("EditOwnIdentityPage.EditIdentityBox.InsertUri") + ": " + mIdentity.getInsertURI().toString());
+
+			
+			//FIXME: check RSAPrivateKey for malicious content!
+			createForm.addChild("p", new String[] { "style" }, new String[] { "font-size: x-small" },
+					l10n().getString("EditOwnIdentityPage.EditIdentityBox.RSAPrivateKey") + ": " + mIdentity.getRSAPrivateKey());
+
 			
 			// TODO Give the user the ability to edit these.
 			createForm.addChild("p", l10n().getString("EditOwnIdentityPage.EditIdentityBox.Contexts") + ": " + mIdentity.getContexts());

@@ -3,7 +3,10 @@
  * any later version). See http://www.gnu.org/ for details of the GPL. */
 package plugins.WoT.ui.fcp;
 
+import java.io.IOException;
 import java.net.MalformedURLException;
+import java.security.NoSuchAlgorithmException;
+import java.security.spec.InvalidKeySpecException;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
@@ -119,7 +122,7 @@ public final class FCPInterface implements FredPluginFCP {
     }
 
     private SimpleFieldSet handleCreateIdentity(final SimpleFieldSet params)
-    	throws InvalidParameterException, FSParseException, MalformedURLException {
+    	throws InvalidParameterException, FSParseException, NoSuchAlgorithmException, InvalidKeySpecException, IOException {
     	
     	OwnIdentity identity;
     	
@@ -137,8 +140,10 @@ public final class FCPInterface implements FredPluginFCP {
         if (identityRequestURI == null && identityInsertURI == null) {
             identity = mWoT.createOwnIdentity(identityNickname, identityPublishesTrustList, identityContext);
         } else {
-            identity = mWoT.createOwnIdentity(identityInsertURI, identityRequestURI, identityNickname, identityPublishesTrustList,
-            		identityContext);
+            //FIXME: Add support for RSA keys in FCP
+        	
+        	identity = mWoT.createOwnIdentity(identityInsertURI, identityRequestURI, identityNickname, identityPublishesTrustList,
+            		identityContext, "", "");
         }
    
         if (params.getBoolean("PublishIntroductionPuzzles", false))
@@ -267,6 +272,11 @@ public final class FCPInterface implements FredPluginFCP {
 					sfs.putOverwrite("Properties" + i + ".Property" + propertiesCounter + ".Name", property.getKey());
 					sfs.putOverwrite("Properties" + i + ".Property" + propertiesCounter++ + ".Value", property.getValue());
 				}
+				
+				//include the RSA private key for the OwnIdentity
+				sfs.putOverwrite("Properties" + i + ".Property" + propertiesCounter + ".Name", "RSAPrivateKey");
+				sfs.putOverwrite("Properties" + i + ".Property" + propertiesCounter++ + ".Value", oid.getRSAPrivateKey());
+				
 				// This is here so you do not forget to do it IN the "if()" if you add an if() around the put() statements to allow selection
 				++i;
 			}
